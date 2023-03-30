@@ -24,7 +24,7 @@ col1, col2, col3 = st.columns([1,1,1])
 
 statgis_file = col1.file_uploader("Carica il file **statgis_latest.xlsx**", type=["xls","xlsx"], accept_multiple_files=False)
 udanet_file = col2.file_uploader("Carica il file **udanet_latest.csv**", type="csv", accept_multiple_files=False)
-unsubscribe_file = col3.file_uploader("Carica il file **unsubscribe_latest.xlsx**", type=["xls","xlsx"], accept_multiple_files=False)
+unsubscribe_file = col3.file_uploader("Carica il file **unsubscribe_latest.xls**", type=["xls","xlsx"], accept_multiple_files=False)
     
 def create_final_df(statgis_file, udanet_file, unsubscribe_file):
     # StatGIS
