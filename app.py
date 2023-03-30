@@ -3,6 +3,7 @@ from st_aggrid import AgGrid
 import pandas as pd
 from datetime import datetime
 import io
+import sys
 
 
 st.set_page_config(layout='wide', initial_sidebar_state='expanded')
@@ -42,10 +43,14 @@ def create_final_df(statgis_file, udanet_file, unsubscribe_file):
     udanet_df_mail.drop_duplicates(subset=["email"], inplace=True)
     col2.metric('UdaNet', len(udanet_df_mail))
     # Unsubscribers
-    unsub_df = pd.read_excel(unsubscribe_file)
-    unsub_df.rename(columns={'EMAIL': 'email'}, inplace=True)
-    unsub_df.columns = ["email"]
-    col3.metric('Disiscritti', len(unsub_df))
+    try:
+        unsub_df = pd.read_excel(unsubscribe_file)
+        unsub_df.rename(columns={'EMAIL': 'email'}, inplace=True)
+        unsub_df.columns = ["email"]
+        col3.metric('Disiscritti', len(unsub_df))
+    except:
+        st.error("**ERRORE**: Il file delle disiscrizioni fornito non è un vero Excel. Aprilo con MS Excel e salvalo nuovamente con estensione .xls o .xlsx per risolvere il problema")
+        sys.exit(1)
     # Concatenazione dei dataframe Udanet e StatGIS
     df_concat = pd.concat([udanet_df_mail, statgis_df], ignore_index=True)
     df_concat.sort_values(by="da_sito", ascending=True, inplace=True)
