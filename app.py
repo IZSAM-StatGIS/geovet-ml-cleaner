@@ -43,6 +43,7 @@ def create_final_df(statgis_file, udanet_file, unsubscribe_file):
     col2.metric('UdaNet', len(udanet_df_mail))
     # Unsubscribers
     unsub_df = pd.read_excel(unsubscribe_file)
+    unsub_df.rename(columns={'EMAIL': 'email'}, inplace=True)
     unsub_df.columns = ["email"]
     col3.metric('Disiscritti', len(unsub_df))
     # Concatenazione dei dataframe Udanet e StatGIS
