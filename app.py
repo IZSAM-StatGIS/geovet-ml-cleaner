@@ -5,20 +5,18 @@ from datetime import datetime
 import io
 import sys
 
+date = datetime.now().strftime("%d-%m-%Y")
 
 st.set_page_config(layout='wide', initial_sidebar_state='expanded')
 
 st.title('GeoVet Mailing List Cleaner ')
-
 st.markdown("""
     L'app esegue le seguenti operazioni per produrre l'output:
-
     1) crea campo "da_sito" in *statgis_latest.xlsx* (da_sito = 'NO') e *udanet_latest.csv* (da_sito = 'YES')
     2) elimina i doppioni dai due file citati nel punto precedente 
     3) concatena e pulisce il dato concatenato dai doppioni, tenendo l'occorrenza presente in *statgis_latest.xlsx* (quindi quella che contiene tutte le info oltre all'indirizzo email)
     3) rimuove dal dato concatenato tutti gli indirizzi presenti nel file *unsubscribe_latest.xls*
     4) mostra a schermo il dato pulito sotto forma di tabella e permette di scaricarlo in formato excel 
-
             """)
 
 col1, col2, col3 = st.columns([1,1,1])
@@ -30,8 +28,10 @@ unsubscribe_file = col3.file_uploader("Carica il file **unsubscribe_latest.xls**
 def create_final_df(statgis_file, udanet_file, unsubscribe_file):
     # StatGIS
     statgis_df = pd.read_excel(statgis_file)
+    statgis_df.drop(["da_sito"], axis=1, errors="ignore") # Cancella il campo da_sito se esiste già
     statgis_df["da_sito"] = "NO" # Aggiunge campo "da_sito"
     statgis_df["email"] = statgis_df["email"].str.strip()
+    statgis_df["Aggiornata"]= statgis_df["Aggiornata"].dt.strftime("%d-%m-%Y")
     statgis_df.drop_duplicates(subset=["email"], inplace=True)
     col1.metric('StatGIS', len(statgis_df))
     # UdaNet
@@ -40,6 +40,7 @@ def create_final_df(statgis_file, udanet_file, unsubscribe_file):
     udanet_df_mail.rename(columns={'Email': 'email'}, inplace=True)
     udanet_df_mail["da_sito"] = "YES" # Aggiunge campo "da_sito"
     udanet_df_mail["email"] = udanet_df_mail["email"].str.strip()
+    udanet_df_mail["Aggiornata"] = date
     udanet_df_mail.drop_duplicates(subset=["email"], inplace=True)
     col2.metric('UdaNet', len(udanet_df_mail))
     # Unsubscribers
@@ -71,7 +72,6 @@ if statgis_file is not None and udanet_file is not None and unsubscribe_file is 
     st.success('Il risultato contiene **{}** indirizzi'.format(len(df)))
     
     # Aggiunta della funzionalità di download
-    date = datetime.now().strftime("%d-%m-%Y")
     file_name = 'ml_final_output_'+date+'.xlsx'
     
     buffer = io.BytesIO()
