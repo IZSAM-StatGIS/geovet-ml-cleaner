@@ -87,7 +87,16 @@ if statgis_file is not None and udanet_file is not None and unsubscribe_file is 
             file_name=file_name,
             mime='application/vnd.ms-excel'
         )
+        
+    _ = '''
+    df2 = df[['email', 'Country','partecipant (1=certo, 2= forse)']]
+    df2['partecipant (1=certo, 2= forse)'].fillna(0, inplace=True)
+    df_count = df2.groupby(['Country','partecipant (1=certo, 2= forse)']).size().reset_index(name="count")
 
+    # df_count = df.groupby(["Country"]).size().reset_index(name="count")
+    st.write("Conteggio indirizzi email per Paese")
+    st.bar_chart(data=df_count, x="Country")
+    '''
 else:
     st.markdown("In attesa dei file di input...")
     
