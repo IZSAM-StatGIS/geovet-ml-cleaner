@@ -16,16 +16,18 @@ st.markdown("""
     2) elimina i doppioni dai due file citati nel punto precedente 
     3) concatena e pulisce il dato concatenato dai doppioni, tenendo l'occorrenza presente in *statgis_latest.xlsx* (quindi quella che contiene tutte le info oltre all'indirizzo email)
     3) rimuove dal dato concatenato tutti gli indirizzi presenti nel file *unsubscribe_latest.xls*
-    4) mostra a schermo il dato pulito sotto forma di tabella e permette di scaricarlo in formato excel 
+    4) rimuove dal dato concatenato tutti gli indirizzi presenti nel file *invalid_addresses.xlsx*
+    5) mostra a schermo il dato pulito sotto forma di tabella e permette di scaricarlo in formato excel 
             """)
 
-col1, col2, col3 = st.columns([1,1,1])
+col1, col2, col3, col4 = st.columns([1,1,1,1])
 
 statgis_file = col1.file_uploader("Carica il file **statgis_latest.xlsx**", type=["xls","xlsx"], accept_multiple_files=False)
 udanet_file = col2.file_uploader("Carica il file **udanet_latest.csv**", type="csv", accept_multiple_files=False)
 unsubscribe_file = col3.file_uploader("Carica il file **unsubscribe_latest.xls**", type=["xls","xlsx"], accept_multiple_files=False)
+invalid_addr_file = col4.file_uploader("Carica il file **invalid_addresses.xlsx**", type=["xls","xlsx"], accept_multiple_files=False)
     
-def create_final_df(statgis_file, udanet_file, unsubscribe_file):
+def create_final_df(statgis_file, udanet_file, unsubscribe_file, invalid_addr_file):
     # StatGIS
     statgis_df = pd.read_excel(statgis_file)
     statgis_df.drop(["da_sito"], axis=1, errors="ignore") # Cancella il campo da_sito se esiste già
@@ -61,10 +63,18 @@ def create_final_df(statgis_file, udanet_file, unsubscribe_file):
     unsubscribers = unsub_df["email"].to_list()
     df_clean = df_unique.query('email != @unsubscribers')
     
-    return df_clean
+    # Invalid addresses
+    invalid_addr_df = pd.read_excel(invalid_addr_file)
+    invalid_addr_df["email"] = invalid_addr_df["email"].str.strip()
+    col4.metric('Non validi/di fantasia', len(invalid_addr_df))
+    # Pulizia indirizzi presenti nel dataframe degli invalidi
+    invalids = invalid_addr_df["email"].to_list()
+    df_clean_final = df_clean.query('email != @invalids')
+    
+    return df_clean_final
 
-if statgis_file is not None and udanet_file is not None and unsubscribe_file is not None:
-    df = create_final_df(statgis_file, udanet_file, unsubscribe_file)
+if statgis_file is not None and udanet_file is not None and unsubscribe_file is not None and invalid_addr_file is not None:
+    df = create_final_df(statgis_file, udanet_file, unsubscribe_file, invalid_addr_file)
     
     # st.dataframe(df.sort_values(by="email", ascending=True), height=400)
     AgGrid(df.sort_values(by="email", ascending=True), height=250, theme='alpine')
@@ -87,16 +97,6 @@ if statgis_file is not None and udanet_file is not None and unsubscribe_file is 
             file_name=file_name,
             mime='application/vnd.ms-excel'
         )
-        
-    _ = '''
-    df2 = df[['email', 'Country','partecipant (1=certo, 2= forse)']]
-    df2['partecipant (1=certo, 2= forse)'].fillna(0, inplace=True)
-    df_count = df2.groupby(['Country','partecipant (1=certo, 2= forse)']).size().reset_index(name="count")
-
-    # df_count = df.groupby(["Country"]).size().reset_index(name="count")
-    st.write("Conteggio indirizzi email per Paese")
-    st.bar_chart(data=df_count, x="Country")
-    '''
 else:
     st.markdown("In attesa dei file di input...")
     
